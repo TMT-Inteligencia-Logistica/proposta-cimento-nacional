@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposta de Inteligência de Mercado - Cimento Nacional | TMT LOG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+    <style>
+        :root {
+            --primary: #003366;
+            --secondary: #00AEEF;
+            --accent: #6BA8DD;
+            --bg: #0a0e14;
+            --bg-elev: #11161e;
+            --card-bg: rgba(255,255,255,0.04);
+            --text: #e8ecf1;
+            --text-muted: #8b94a3;
+            --border: rgba(255,255,255,0.08);
+            --border-strong: rgba(0,174,239,0.3);
+            --ens-color: #00AEEF;
+            --gran-color: #2E6CB0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+        html { scroll-behavior:smooth; }
+        body { background:var(--bg); color:var(--text); line-height:1.65; overflow-x:hidden; }
+
+        .bg-glow   { position:fixed; width:700px; height:700px; background:radial-gradient(circle,rgba(0,51,102,.35) 0%,transparent 70%); top:-250px; right:-250px; z-index:-1; pointer-events:none; filter:blur(60px); border-radius:50%; }
+        .bg-glow-2 { position:fixed; width:600px; height:600px; background:radial-gradient(circle,rgba(0,174,239,.15) 0%,transparent 70%); bottom:-150px; left:-150px; z-index:-1; pointer-events:none; filter:blur(60px); border-radius:50%; }
+
+        /* ── NAV ── */
+        nav { padding:.85rem 5%; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; width:100%; background:rgba(10,14,20,.88); backdrop-filter:blur(14px); z-index:1000; border-bottom:1px solid var(--border); }
+        .logo-container { display:flex; align-items:center; gap:14px; }
+        .logo-tmt { height:30px; }
+        .logo-cn  { height:26px; border-left:1px solid var(--border); padding-left:14px; }
+        .nav-tag  { font-weight:400; letter-spacing:1.5px; font-size:.72rem; color:var(--text-muted); text-transform:uppercase; }
+        .nav-links { display:flex; gap:1.3rem; }
+        .nav-links a { color:var(--text-muted); text-decoration:none; font-size:.78rem; transition:color .3s; }
+        .nav-links a:hover { color:var(--secondary); }
+        .nav-date { color:var(--accent); font-weight:500; font-size:.82rem; }
+
+        /* ── SECTIONS ── */
+        section { padding:72px 7% 32px; position:relative; }
+        .section-tag { display:inline-block; font-size:.65rem; text-transform:uppercase; letter-spacing:3px; margin-bottom:.9rem; color:var(--secondary); font-weight:400; }
+        h2 { font-size:1.9rem; font-weight:600; margin-bottom:.6rem; color:#fff; letter-spacing:-.01em; }
+        h3 { font-weight:600; letter-spacing:-.01em; }
+        .subtitle { color:var(--text-muted); font-size:.95rem; max-width:740px; margin-bottom:1.4rem; font-weight:300; line-height:1.7; }
+
+        /* ── HERO ── */
+        .hero-img-layer {
+            position:absolute; top:0; right:0; width:62%; height:500px; overflow:hidden; pointer-events:none;
+            -webkit-mask-image:linear-gradient(to left, #000 45%, transparent 100%);
+            mask-image:linear-gradient(to left, #000 45%, transparent 100%);
+        }
+        .hero-bg-img {
+            display:block; width:100%; height:100%;
+            object-fit:cover; object-position:right center;
+            opacity:.85; filter:brightness(1.08) contrast(1.05);
+        }
+        @media(max-width:760px){ .hero-img-layer { display:none; } }
+        .hero h1 { font-size:clamp(2rem,4vw,3rem); font-weight:600; margin-bottom:.6rem; color:#fff; line-height:1.15; letter-spacing:-.02em; }
+        .hero .lead   { font-size:1rem; color:var(--secondary); margin-bottom:.3rem; font-weight:300; }
+        .hero .client { font-size:.78rem; color:var(--accent); margin-bottom:1.8rem; font-weight:500; letter-spacing:2px; text-transform:uppercase; }
+        .hero-meta { display:flex; gap:2rem; margin-top:1.2rem; padding-top:1.2rem; border-top:1px solid var(--border); max-width:620px; flex-wrap:wrap; }
+        .hero-meta-item .label { font-size:.62rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:1.5px; margin-bottom:.3rem; }
+        .hero-meta-item .value { font-size:.92rem; color:#fff; font-weight:500; }
+
+        /* ── PLANO DE TRABALHO ── */
+        .plano-text { font-size:1rem; color:var(--text); line-height:1.9; max-width:880px; font-weight:300; border-left:3px solid var(--secondary); padding-left:1.8rem; margin-top:1.4rem; }
+        .plano-text strong { color:#fff; font-weight:500; }
+
+        /* ── STAT CARDS ── */
+        .stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:1rem; margin-top:1.4rem; }
+        .stat-card { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:1.3rem 1.4rem; transition:border-color .3s; }
+        .stat-card:hover { border-color:var(--border-strong); }
+        .stat-card .sc-num { font-size:1.7rem; font-weight:600; color:#fff; line-height:1; margin-bottom:.3rem; }
+        .stat-card .sc-label { color:var(--text-muted); font-size:.7rem; text-transform:uppercase; letter-spacing:1.5px; }
+        .stat-card.ens .sc-num { color:var(--ens-color); }
+        .stat-card.gran .sc-num { color:var(--gran-color); }
+
+        /* ── 3D CHART ── */
+        #chart3D { width:100%; height:540px; }
+        .map-legend { display:flex; gap:1.5rem; margin-top:.9rem; font-size:.75rem; align-items:center; flex-wrap:wrap; }
+        .map-legend-item { display:flex; align-items:center; gap:.4rem; color:var(--text-muted); }
+        .map-legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+        /* ── CHART CARDS ── */
+        .donuts-row { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+        .chart-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1.4rem 1.6rem; }
+        .chart-card h4 { font-size:.85rem; font-weight:500; color:#fff; margin-bottom:.4rem; }
+        .chart-card .ch-sub { font-size:.72rem; color:var(--text-muted); margin-bottom:1rem; }
+
+        /* ── ROUTE TABLES ── */
+        .route-ops { display:grid; grid-template-columns:1fr; gap:1.4rem; margin-top:1.4rem; }
+        .route-table-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .rt-header { padding:.9rem 1.3rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+        .rt-header .rt-title { font-size:.88rem; font-weight:600; }
+        .rt-header .rt-badge { font-size:.68rem; padding:.25rem .7rem; border-radius:50px; font-weight:500; text-transform:uppercase; letter-spacing:1px; }
+        .badge-ens  { background:rgba(0,174,239,.12); color:var(--ens-color); border:1px solid rgba(0,174,239,.25); }
+        .badge-gran { background:rgba(46,108,176,.14); color:var(--gran-color); border:1px solid rgba(46,108,176,.32); }
+        .rt-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+        .rt-table thead tr { background:rgba(0,0,0,.2); }
+        .rt-table th { padding:.55rem .9rem; text-align:left; color:var(--text-muted); font-weight:500; font-size:.68rem; text-transform:uppercase; letter-spacing:1px; }
+        .rt-table td { padding:.5rem .9rem; border-bottom:1px solid var(--border); color:var(--text); }
+        .rt-table tr:last-child td { border-bottom:none; }
+        .rt-table tr:hover td { background:rgba(255,255,255,.02); }
+        .vol-bar-wrap { display:flex; align-items:center; gap:.5rem; }
+        .vol-bar { height:4px; border-radius:2px; min-width:2px; }
+        .vol-bar.ens-bar  { background:var(--ens-color); }
+        .vol-bar.gran-bar { background:var(--gran-color); }
+        .vol-num { font-size:.72rem; color:var(--text-muted); white-space:nowrap; }
+        .veh-tag { display:inline-block; padding:.15rem .5rem; background:rgba(255,255,255,.06); border-radius:4px; font-size:.68rem; color:var(--text-muted); }
+
+        /* ── CAPTAÇÕES ── */
+        .captacao-cols { display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; margin-top:1.6rem; }
+        .captacao-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1.8rem; }
+        .captacao-card.direta { border-top:3px solid var(--secondary); }
+        .captacao-card.extrap { border-top:3px solid var(--accent); }
+        .cap-label { font-size:.62rem; text-transform:uppercase; letter-spacing:2.5px; margin-bottom:.5rem; font-weight:400; display:block; }
+        .captacao-card.direta .cap-label { color:var(--secondary); }
+        .captacao-card.extrap .cap-label { color:var(--accent); }
+        .cap-title { font-size:1.05rem; font-weight:600; color:#fff; margin-bottom:1rem; display:block; }
+        .captacao-card p { color:var(--text-muted); font-size:.88rem; line-height:1.72; margin-bottom:.85rem; }
+        .cap-box { background:rgba(0,0,0,.28); border:1px solid var(--border); border-radius:10px; padding:.9rem 1.1rem; font-size:.82rem; color:var(--text-muted); }
+        .cap-box strong { color:var(--text); display:block; margin-bottom:.3rem; font-size:.8rem; text-transform:uppercase; letter-spacing:.5px; }
+        .cap-formula { background:rgba(107,168,221,.1); border:1px solid rgba(107,168,221,.32); border-radius:8px; padding:.8rem 1.1rem; font-size:.88rem; color:var(--accent); margin-top:.9rem; font-weight:500; }
+        .captacao-disclaimer { margin-top:1.6rem; padding:1.2rem 1.6rem; background:rgba(0,174,239,.06); border:1px solid rgba(0,174,239,.18); border-radius:12px; font-size:.85rem; color:var(--secondary); text-align:center; line-height:1.75; }
+        .captacao-disclaimer strong { color:#fff; }
+
+        /* ── ESTRUTURA TMT ── */
+        .equipe-layout { display:grid; grid-template-columns:1fr 1fr; gap:1.8rem; margin-top:1.6rem; align-items:start; }
+        .equipe-roles { display:flex; flex-direction:column; gap:1rem; }
+        .equipe-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1.2rem 1.5rem; display:flex; gap:1.1rem; align-items:flex-start; transition:border-color .3s; }
+        .equipe-card:hover { border-color:var(--border-strong); }
+        .eq-icon { width:44px; height:44px; border-radius:50%; background:rgba(0,174,239,.09); border:1px solid rgba(0,174,239,.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .eq-body h4 { font-size:.9rem; font-weight:600; color:#fff; margin-bottom:.1rem; }
+        .eq-tag { font-size:.62rem; color:var(--secondary); text-transform:uppercase; letter-spacing:1.5px; font-weight:400; display:block; margin-bottom:.35rem; }
+        .eq-body p { color:var(--text-muted); font-size:.82rem; line-height:1.62; }
+        .equipe-highlight { background:rgba(0,51,102,.2); border:1px solid rgba(0,174,239,.2); border-radius:16px; padding:2rem 1.8rem; }
+        .equipe-highlight h3 { font-size:1.15rem; font-weight:600; color:#fff; margin-bottom:.2rem; line-height:1.35; }
+        .eq-tag-h { font-size:.62rem; color:var(--secondary); text-transform:uppercase; letter-spacing:1.5px; font-weight:400; display:block; margin-bottom:1rem; }
+        .equipe-highlight p { color:var(--text-muted); font-size:.86rem; line-height:1.78; }
+
+        /* ── METODOLOGIA 3 COLUNAS ── */
+        .methodology-3col { display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; margin-top:1.4rem; }
+        .method-3-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:border-color .3s; }
+        .method-3-card:hover { border-color:var(--secondary); }
+        .method-3-header { padding:1.2rem 1.4rem; background:linear-gradient(135deg,rgba(0,51,102,.55) 0%,rgba(0,40,80,.22) 100%); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:.9rem; }
+        .method-3-num { font-size:2rem; font-weight:700; color:var(--secondary); line-height:1; flex-shrink:0; opacity:.75; }
+        .method-3-header h3 { font-size:.95rem; font-weight:600; color:#fff; line-height:1.4; }
+        .method-3-body { padding:1.4rem; }
+        .method-3-body p { color:var(--text-muted); font-size:.86rem; line-height:1.73; }
+
+        /* ── ENTREGÁVEIS ── */
+        .deliverables-wrapper { background:rgba(255,255,255,.025); border:1px solid var(--border); border-radius:16px; padding:2rem 1.8rem 1.6rem; margin-top:1.2rem; }
+        .deliverables { display:grid; grid-template-columns:repeat(3,1fr); gap:0; position:relative; }
+        .deliverable { display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 .9rem; position:relative; }
+        .deliverable:not(:last-child)::after { content:''; position:absolute; top:calc(1.4rem + 36px); left:calc(50% + 36px); width:calc(100% - 72px - 1.4rem); height:0; border-top:2px dashed rgba(107,168,221,.35); }
+        .deliverable h4 { color:var(--secondary); font-size:.82rem; font-weight:600; margin-bottom:1rem; min-height:2.4rem; display:flex; align-items:center; justify-content:center; }
+        .deliverable .icon-circle { width:72px; height:72px; border-radius:50%; border:2px dashed rgba(107,168,221,.5); display:flex; align-items:center; justify-content:center; margin-bottom:1rem; background:rgba(0,51,102,.22); transition:border-color .3s; }
+        .deliverable:hover .icon-circle { border-color:var(--accent); }
+        .deliverable .icon-circle svg { width:32px; height:32px; }
+        .deliverable p { color:var(--text-muted); font-size:.78rem; line-height:1.65; text-align:justify; flex:1; margin-bottom:1rem; }
+        .deliverable .meta-box { width:100%; background:rgba(0,0,0,.22); border:1px solid var(--border); border-radius:9px; padding:.6rem .75rem; display:flex; flex-direction:column; gap:.38rem; }
+        .meta-row { display:flex; align-items:center; gap:.45rem; font-size:.75rem; color:var(--text-muted); }
+        .meta-row .meta-icon { width:17px; height:17px; flex-shrink:0; }
+        .meta-row span { color:var(--text); }
+
+        /* ── PONTOS DE ATENÇÃO ── */
+        .atencao-intro { color:var(--text); font-size:.95rem; margin-bottom:1.3rem; font-weight:400; }
+        .atencao-list { list-style:none; display:flex; flex-direction:column; gap:1rem; max-width:940px; }
+        .atencao-list > li { position:relative; padding-left:1.4rem; color:var(--text-muted); font-size:.9rem; line-height:1.7; }
+        .atencao-list > li::before { content:''; position:absolute; left:0; top:.62rem; width:7px; height:7px; border-radius:50%; background:var(--secondary); }
+        .atencao-list > li strong { color:var(--text); font-weight:500; }
+        .atencao-list em { color:var(--accent); font-style:italic; }
+        .atencao-sublist { list-style:none; margin-top:.65rem; margin-left:.2rem; display:flex; flex-direction:column; gap:.45rem; }
+        .atencao-sublist li { position:relative; padding-left:1.3rem; font-size:.86rem; color:var(--text-muted); line-height:1.55; }
+        .atencao-sublist li::before { content:'—'; position:absolute; left:0; color:var(--accent); }
+        .atencao-banner { margin-top:1.7rem; padding:1.4rem 1.8rem; background:linear-gradient(135deg,rgba(0,51,102,.6),rgba(0,40,80,.3)); border:1px solid var(--border-strong); border-radius:14px; color:var(--text); font-size:.9rem; line-height:1.78; }
+        .atencao-banner strong { color:var(--secondary); }
+
+        /* ── PREMISSAS ── */
+        .premissas-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.4rem; }
+        .premissa-item { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:1.15rem 1.4rem; display:flex; gap:1rem; align-items:flex-start; transition:border-color .3s; }
+        .premissa-item:hover { border-color:var(--border-strong); }
+        .premissa-num { width:28px; height:28px; border-radius:8px; background:rgba(0,174,239,.1); border:1px solid rgba(0,174,239,.25); color:var(--secondary); font-weight:600; font-size:.82rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .premissa-item p { color:var(--text-muted); font-size:.85rem; line-height:1.66; }
+        .premissa-item p strong { color:var(--text); font-weight:500; }
+
+        /* ── PRICING ── */
+        .pricing-container { display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; margin-top:1.4rem; }
+        .price-old { color:var(--text-muted); text-decoration:line-through; font-size:.82rem; margin-right:.5rem; }
+        .price-off { color:#00d4a0; font-size:.72rem; font-weight:600; }
+        /* Aceite */
+        .accept-btn { margin-top:1.3rem; display:inline-flex; align-items:center; justify-content:center; gap:.5rem; width:100%; padding:.72rem 1rem; border-radius:10px; border:1px solid var(--secondary); background:transparent; color:var(--secondary); font-family:'Outfit',sans-serif; font-size:.84rem; font-weight:500; text-decoration:none; cursor:pointer; transition:all .25s; }
+        .accept-btn:hover { background:var(--secondary); color:var(--bg); }
+        .accept-btn svg { width:16px; height:16px; }
+        .pricing-card.featured .accept-btn { background:var(--secondary); color:var(--bg); }
+        .pricing-card.featured .accept-btn:hover { background:#33c4f5; }
+        .accept-note { text-align:center; font-size:.66rem; color:var(--text-muted); margin-top:.55rem; line-height:1.4; }
+
+        /* WhatsApp flutuante */
+        .wa-float { position:fixed; bottom:22px; right:22px; z-index:2000; display:flex; align-items:center; gap:.55rem; background:#25D366; color:#fff; padding:.7rem 1.05rem .7rem .85rem; border-radius:50px; text-decoration:none; font-size:.84rem; font-weight:500; box-shadow:0 6px 22px rgba(0,0,0,.4); transition:transform .25s, box-shadow .25s; }
+        .wa-float:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(37,211,102,.5); }
+        .wa-float svg { width:24px; height:24px; flex-shrink:0; fill:#fff; }
+        .wa-float .wa-text { white-space:nowrap; line-height:1.15; }
+        .wa-float .wa-text small { display:block; font-size:.62rem; opacity:.85; font-weight:400; }
+        @media(max-width:600px){ .wa-float .wa-text { display:none; } .wa-float { padding:.85rem; } }
+        .pricing-card { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:20px; padding:2.2rem; display:flex; flex-direction:column; position:relative; }
+        .pricing-card.featured { border-color:var(--secondary); background:rgba(0,174,239,.05); }
+        .pricing-card.featured::before { content:'RECOMENDADO'; position:absolute; top:-11px; right:1.8rem; background:var(--secondary); color:var(--bg); padding:.25rem .8rem; border-radius:50px; font-size:.66rem; font-weight:700; letter-spacing:1.5px; }
+        .pricing-card .scenario { color:var(--accent); font-size:.63rem; text-transform:uppercase; letter-spacing:2.5px; font-weight:400; margin-bottom:.4rem; }
+        .pricing-card h3 { font-size:1.1rem; color:#fff; margin-bottom:.3rem; font-weight:500; }
+        .pricing-card .desc { color:var(--text-muted); margin-bottom:1.3rem; font-size:.85rem; }
+        .price-breakdown { display:flex; flex-direction:column; gap:.5rem; padding:1.1rem; background:rgba(0,0,0,.22); border-radius:10px; margin-bottom:1.2rem; }
+        .price-line { display:flex; justify-content:space-between; align-items:center; font-size:.86rem; color:var(--text-muted); }
+        .price-line .pl-val { color:#fff; font-weight:500; }
+        .price-divider { border-top:1px dashed var(--border); margin:.3rem 0; }
+        .price-total { display:flex; justify-content:space-between; align-items:baseline; padding-top:.5rem; }
+        .price-total .pt-label { font-size:.66rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); font-weight:400; }
+        .price-total .pt-val { font-size:1.3rem; font-weight:600; color:#fff; }
+        .price-unit { color:var(--text-muted); font-size:.78rem; margin-bottom:1.1rem; }
+        .checklist { list-style:none; margin-top:auto; }
+        .checklist li { margin-bottom:.6rem; display:flex; gap:.6rem; align-items:flex-start; font-size:.88rem; color:var(--text); }
+        .checklist li::before { content:"✓"; color:var(--secondary); font-weight:bold; flex-shrink:0; margin-top:2px; }
+
+        /* ── CONDIÇÕES ── */
+        .conditions-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin-top:1.2rem; }
+        .condition { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:1.4rem; transition:border-color .3s; }
+        .condition:hover { border-color:var(--border-strong); }
+        .condition h4 { color:#fff; font-size:.9rem; margin-bottom:.35rem; font-weight:500; }
+        .condition p { color:var(--text-muted); font-size:.84rem; line-height:1.55; }
+        .condition .ico { font-size:1rem; margin-bottom:.6rem; color:var(--secondary); }
+
+        /* ── FOOTER ── */
+        footer { padding:2.5rem 7% 2rem; border-top:1px solid var(--border); background:var(--bg-elev); }
+        .footer-bottom { text-align:center; color:var(--text-muted); font-size:.78rem; padding-top:1.2rem; border-top:1px solid var(--border); }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:900px){
+            .stats-row { grid-template-columns:repeat(3,1fr); }
+            .donuts-row { grid-template-columns:1fr; }
+            .route-ops { grid-template-columns:1fr; }
+            .captacao-cols { grid-template-columns:1fr; }
+            .equipe-layout { grid-template-columns:1fr; }
+            .methodology-3col { grid-template-columns:1fr; }
+            .deliverables { grid-template-columns:repeat(2,1fr); }
+            .deliverable:not(:last-child)::after { display:none; }
+            .pricing-container { grid-template-columns:1fr; }
+            .conditions-grid { grid-template-columns:1fr; }
+            .nav-links { display:none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+
+<!-- Imagem de fundo do topo (Hero → Volume de Rotas) -->
+<div class="hero-img-layer"><img src="hero.png" alt="" class="hero-bg-img" onerror="this.parentElement.style.display='none'"></div>
+
+<!-- WhatsApp flutuante (Otávio) -->
+<a class="wa-float" href="https://wa.me/5531995453001?text=Ol%C3%A1%20Ot%C3%A1vio!%20Tenho%20uma%20d%C3%BAvida%20sobre%20a%20proposta%20de%20Intelig%C3%AAncia%20de%20Mercado%20da%20Cimento%20Nacional." target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <span class="wa-text">Dúvidas? Fale com a TMT<small>WhatsApp · Otávio</small></span>
+</a>
+
+<nav>
+    <div class="logo-container">
+        <img src="logo_tmt.png" alt="TMT LOG" class="logo-tmt" onerror="this.style.display='none'">
+        <img src="logo_cimento_naciona.png" alt="Cimento Nacional" class="logo-cn" onerror="this.style.display='none'">
+        <span class="nav-tag">Proposta Cimento Nacional</span>
+    </div>
+    <div class="nav-links">
+        <a href="#plano">Plano</a>
+        <a href="#escopo">Escopo</a>
+        <a href="#captacoes">Captações</a>
+        <a href="#estrutura">Estrutura</a>
+        <a href="#metodologia">Metodologia</a>
+        <a href="#entregaveis">Entregáveis</a>
+        <a href="#comercial">Comercial</a>
+    </div>
+    <span class="nav-date">05/2026</span>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+    <span class="section-tag">Inteligência de Mercado</span>
+    <h1>Proposta Técnica<br>e Comercial</h1>
+    <p class="lead">Frete Rodoviário de Distribuição</p>
+    <p class="client">Cimento Nacional</p>
+    <div class="hero-meta">
+        <div class="hero-meta-item"><div class="label">Cliente</div><div class="value">Cimento Nacional</div></div>
+        <div class="hero-meta-item"><div class="label">Operações</div><div class="value">Ensacado + Granel</div></div>
+        <div class="hero-meta-item"><div class="label">Rotas Mapeadas</div><div class="value">46 rotas</div></div>
+        <div class="hero-meta-item"><div class="label">Data</div><div class="value">Maio / 2026</div></div>
+        <div class="hero-meta-item"><div class="label">Validade</div><div class="value">30 dias</div></div>
+    </div>
+</section>
+
+<!-- ══ 01 — PLANO DE TRABALHO ══ -->
+<section id="plano">
+    <span class="section-tag">01 — Plano de Trabalho</span>
+    <h2>Plano de Trabalho</h2>
+    <p class="plano-text">
+        A nossa proposta consiste em construirmos uma <strong>análise mercadológica e técnica dos fretes de Distribuição da CIMENTO NACIONAL</strong>, permitindo ações rápidas e assertivas para a equipe de Contratação de Fretes. O monitoramento das rotas permitirá a identificação de sazonalidades e oportunidades mercadológicas que atualmente não são monitoradas e captadas pela CIMENTO NACIONAL, trazendo <strong>redução de custos e melhoria do nível de serviços</strong>.
+    </p>
+</section>
+
+<!-- ══ 02 — ESCOPO: stats + mapa + donuts ══ -->
+<section id="escopo">
+    <span class="section-tag">02 — Escopo de Rotas</span>
+    <h2>Volume de Rotas Mapeadas</h2>
+    <p class="subtitle">Base de rotas 2025–2026 disponibilizada pelo time de Fretes da Cimento Nacional, segmentada por tipo de operação — Ensacado e Granel — com volume acumulado por município de destino.</p>
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="sc-num">46</div><div class="sc-label">Rotas Totais</div></div>
+        <div class="stat-card ens"><div class="sc-num">34</div><div class="sc-label">Rotas Ensacado</div></div>
+        <div class="stat-card gran"><div class="sc-num">12</div><div class="sc-label">Rotas Granel</div></div>
+        <div class="stat-card"><div class="sc-num">617k</div><div class="sc-label">Ton Ensacado</div></div>
+        <div class="stat-card"><div class="sc-num">258k</div><div class="sc-label">Ton Granel</div></div>
+    </div>
+
+    <!-- Gráfico 3D full width -->
+    <div class="chart-card" style="margin-top:1.4rem;">
+        <h4>Mapa de Colunas 3D — Volume por Município</h4>
+        <p class="ch-sub">Colunas posicionadas no mapa do Brasil pela localização real de cada cidade · altura proporcional ao volume (ton) · amarelo = Ensacado · azul = Granel</p>
+        <div id="chart3D"></div>
+        <div class="map-legend">
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#FDB913;"></div><span>Ensacado (34 rotas)</span></div>
+            <div class="map-legend-item"><div class="map-legend-dot" style="background:#2E6CB0;"></div><span>Granel (12 rotas)</span></div>
+            <div class="map-legend-item" style="margin-left:auto;font-size:.7rem;">Arraste para girar · scroll para zoom · passe o mouse para detalhes</div>
+        </div>
+    </div>
+
+    <!-- Bar charts -->
+    <div class="donuts-row" style="margin-top:1.4rem;">
+        <div class="chart-card">
+            <h4>Veículos — Ensacado</h4>
+            <p class="ch-sub">34 rotas · nº de rotas por tipo de veículo predominante</p>
+            <div style="position:relative;height:250px;"><canvas id="chartVeicEns"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h4>Veículos — Granel</h4>
+            <p class="ch-sub">12 rotas · nº de rotas por tipo de veículo predominante</p>
+            <div style="position:relative;height:250px;"><canvas id="chartVeicGran"></canvas></div>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 03 — ESCOPO DE ROTAS: tabelas ══ -->
+<section id="rotas">
+    <span class="section-tag">03 — Escopo de Rotas</span>
+    <h2>Rotas por Operação</h2>
+    <p class="subtitle">Listagem completa das 46 rotas mapeadas com volume acumulado (ton), estado de destino e tipo de veículo predominante.</p>
+    <div class="route-ops">
+        <div class="route-table-card">
+            <div class="rt-header">
+                <span class="rt-title" style="color:var(--ens-color);">Ensacado</span>
+                <span class="rt-badge badge-ens">34 rotas</span>
+            </div>
+            <table class="rt-table">
+                <thead><tr><th>#</th><th>Local Exped.</th><th>Destino</th><th>UF</th><th>Volume (ton)</th><th>Veículo</th></tr></thead>
+                <tbody id="tbEns"></tbody>
+            </table>
+        </div>
+        <div class="route-table-card">
+            <div class="rt-header">
+                <span class="rt-title" style="color:var(--gran-color);">Granel</span>
+                <span class="rt-badge badge-gran">12 rotas</span>
+            </div>
+            <table class="rt-table">
+                <thead><tr><th>#</th><th>Local Exped.</th><th>Destino</th><th>UF</th><th>Volume (ton)</th><th>Veículo</th></tr></thead>
+                <tbody id="tbGran"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 04 — CAPTAÇÃO DE INFORMAÇÕES ══ -->
+<section id="captacoes">
+    <span class="section-tag">04 — Captação de Informações</span>
+    <h2>Como são feitas as captações de informações</h2>
+    <p class="subtitle">As informações utilizadas no Benchmarking são captadas no mercado e trata-se de dados <strong style="color:#fff;">REAIS</strong> — não sendo utilizados em hipótese nenhuma cálculos ou dados teóricos. Detalhamos abaixo a metodologia de captação e comparação com as rotas da CIMENTO NACIONAL.</p>
+
+    <div class="captacao-cols">
+        <!-- Referência Direta -->
+        <div class="captacao-card direta">
+            <span class="cap-label">Método 1</span>
+            <span class="cap-title">Referência Direta</span>
+            <p>Chamamos de referência direta quando conseguimos captar no mercado o frete da rota exatamente igual ao da CIMENTO NACIONAL.</p>
+            <p>Será uma referência exata quando encontramos na mesma origem e destino um frete de outro embarcador com mesmo tipo de veículo utilizado pela CIMENTO NACIONAL na rota.</p>
+            <div class="cap-box">
+                <strong>Exemplo prático</strong>
+                Rota Matozinhos/MG × Bairro Califórnia (Belo Horizonte/MG) — 55,6 km.<br><br>
+                Referência encontrada com mesmo O/D e mesmo perfil de equipamento de outro embarcador que opera a mesma rota.
+            </div>
+        </div>
+        <!-- Extrapolação -->
+        <div class="captacao-card extrap">
+            <span class="cap-label">Método 2</span>
+            <span class="cap-title">Extrapolação</span>
+            <p>Quando não encontramos uma referência exata — seja por falta de embarcadores concorrentes ou por falta de volume na região — extrapolamos para a microrregião mais próxima, chegando até no máximo uma extrapolação de mesorregião.</p>
+            <p>Calcula-se o R$/ton/km da rota encontrada e aplica-se na distância da rota original da CIMENTO NACIONAL:</p>
+            <div class="cap-box">
+                <strong>Rota Original</strong>
+                Matozinhos/MG × Bairro Califórnia (Belo Horizonte/MG) · <em>55,6 km</em>
+                <br><br>
+                <strong>Rota Encontrada</strong>
+                Pedro Leopoldo/MG × Bairro Camargos (Belo Horizonte/MG) · <em>46,1 km · R$ 28,00 / ton</em>
+            </div>
+            <div class="cap-formula">
+                Frete Original Extrapolado: &nbsp;<strong>R$ 33,77</strong> &nbsp;= 28,00 ÷ 46,1 × 55,6
+            </div>
+        </div>
+    </div>
+
+    <div class="captacao-disclaimer">
+        100% dos fretes utilizados no Benchmarking são referências reais, seja por Referência Direta ou por Extrapolação.<br>
+        <strong>Não utilizamos custo teórico na construção da comparação com o mercado.</strong>
+    </div>
+</section>
+
+<!-- ══ 05 — ESTRUTURA TMT ══ -->
+<section id="estrutura">
+    <span class="section-tag">05 — Estrutura Operacional</span>
+    <h2>Estrutura TMT para realização do escopo</h2>
+    <p class="subtitle">Time dedicado ao projeto com papéis compartilhados e responsabilidades definidas para cada dimensão do serviço contratado.</p>
+
+    <div class="equipe-layout">
+        <!-- Três cards de funções -->
+        <div class="equipe-roles">
+            <div class="equipe-card">
+                <div class="eq-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="3" width="18" height="13" rx="2" stroke="#00AEEF" stroke-width="1.5" fill="none"/>
+                        <line x1="8" y1="20" x2="16" y2="20" stroke="#00AEEF" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="12" y1="16" x2="12" y2="20" stroke="#00AEEF" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <div class="eq-body">
+                    <h4>Gestor de Projetos</h4>
+                    <span class="eq-tag">Compartilhado</span>
+                    <p>Profissional responsável por coordenar a execução do projeto e a equipe.</p>
+                </div>
+            </div>
+            <div class="equipe-card">
+                <div class="eq-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="11" cy="11" r="7" stroke="#00AEEF" stroke-width="1.5" fill="none"/>
+                        <circle cx="11" cy="11" r="3" stroke="#00AEEF" stroke-width="1" fill="none" opacity=".45"/>
+                        <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#00AEEF" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="eq-body">
+                    <h4>Pesquisa e Análise</h4>
+                    <span class="eq-tag">Compartilhado</span>
+                    <p>Profissionais responsáveis por coletar os dados no mercado, analisando e validando as informações qualitativas e de benchmarking.</p>
+                </div>
+            </div>
+            <div class="equipe-card">
+                <div class="eq-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="3" width="16" height="18" rx="2" stroke="#00AEEF" stroke-width="1.5" fill="none"/>
+                        <path d="M8 9h8M8 13h5" stroke="#00AEEF" stroke-width="1.2" stroke-linecap="round"/>
+                        <path d="M8 17h3" stroke="#6BA8DD" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="eq-body">
+                    <h4>Analista de Informações</h4>
+                    <span class="eq-tag">Compartilhado</span>
+                    <p>Profissional responsável por analisar, tabular e parametrizar os dados obtidos, convertendo em informações e relatórios.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Destaque Equipe de IM -->
+        <div class="equipe-highlight">
+            <h3>Equipe de Inteligência<br>de Mercado</h3>
+            <span class="eq-tag-h">Compartilhado</span>
+            <p>Compartilhamento do time de Inteligência de Mercado da TMT na troca de informações, conferência e validação de dados, captação de informações em regiões geograficamente semelhantes — tanto com o objetivo de captar tarifas como também para a captura das informações qualitativas.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 06 — METODOLOGIA ══ -->
+<section id="metodologia">
+    <span class="section-tag">06 — Metodologia</span>
+    <h2>Metodologia Aplicada</h2>
+    <p class="subtitle">O trabalho de Inteligência de Mercado consiste em três frentes de análise dos fretes rodoviários, combinando dados reais de mercado, análise qualitativa e modelagem técnica.</p>
+
+    <div class="methodology-3col">
+        <div class="method-3-card">
+            <div class="method-3-header">
+                <span class="method-3-num">1.</span>
+                <h3>Análise Mercadológica</h3>
+            </div>
+            <div class="method-3-body">
+                <p>Consiste em compararmos os fretes praticados pela CIMENTO NACIONAL com mercados geograficamente semelhantes, com características operacionais semelhantes e que utilizam o mesmo perfil de equipamento, trazendo um Benchmarking mercadológico das tarifas praticadas.</p>
+            </div>
+        </div>
+        <div class="method-3-card">
+            <div class="method-3-header">
+                <span class="method-3-num">2.</span>
+                <h3>Análise Qualitativa</h3>
+            </div>
+            <div class="method-3-body">
+                <p>Além da análise comparativa das tarifas, é realizada uma análise qualitativa do comportamento do mercado ao qual a CIMENTO NACIONAL está inserida de forma a apoiar as estratégias e tomadas de decisão em conjunto com o benchmarking de tarifas.</p>
+            </div>
+        </div>
+        <div class="method-3-card">
+            <div class="method-3-header">
+                <span class="method-3-num">3.</span>
+                <h3>Análise Técnica <small style="font-size:.72rem;font-weight:400;opacity:.65;">(Should Cost)</small></h3>
+            </div>
+            <div class="method-3-body">
+                <p>A terceira dimensão de análise é o que chamamos de Should Cost, onde analisamos tecnicamente, com base nas premissas operacionais da CIMENTO NACIONAL, qual deveria ser o valor do frete, desconsiderando fatores mercadológicos.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 07 — ENTREGÁVEIS ══ -->
+<section id="entregaveis">
+    <span class="section-tag">07 — Entregáveis</span>
+    <h2>Serviços Inclusos na Proposta</h2>
+    <p class="subtitle">Três entregáveis distintos e complementares, com métricas, formatos e frequências definidas para cada operação.</p>
+    <div class="deliverables-wrapper">
+    <div class="deliverables">
+
+        <div class="deliverable">
+            <h4>Benchmarking de Fretes</h4>
+            <div class="icon-circle">
+                <svg viewBox="0 0 32 32" fill="none"><rect x="3" y="18" width="5" height="9" rx="1" fill="#00AEEF" opacity=".9"/><rect x="10" y="13" width="5" height="14" rx="1" fill="#00AEEF" opacity=".7"/><rect x="17" y="8" width="5" height="19" rx="1" fill="#00AEEF" opacity=".5"/><circle cx="25" cy="7" r="4.5" stroke="#6BA8DD" stroke-width="1.5" fill="none"/><line x1="28" y1="10" x2="31" y2="13" stroke="#6BA8DD" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <p>Pesquisa do mercado de fretes reais praticados nas rotas Ensacado e Granel, criando painel de informações dinâmicas para melhor tomada de decisão.</p>
+            <div class="meta-box">
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="6" width="4" height="10" rx="1" fill="#E8A22B"/><rect x="7" y="9" width="4" height="7" rx="1" fill="#F2C811"/><rect x="12" y="3" width="4" height="13" rx="1" fill="#F5D657"/></svg><span>Entrega em Power BI</span></div>
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#8b94a3" stroke-width="1.2" fill="none"/><path d="M9 5v4l3 2" stroke="#8b94a3" stroke-width="1.2" stroke-linecap="round"/></svg><span>Mensal / Quinzenal / Semanal</span></div>
+            </div>
+        </div>
+
+        <div class="deliverable">
+            <h4>Should Cost</h4>
+            <div class="icon-circle">
+                <svg viewBox="0 0 32 32" fill="none"><rect x="6" y="4" width="20" height="24" rx="2" stroke="#00AEEF" stroke-width="1.5" fill="none"/><line x1="10" y1="10" x2="22" y2="10" stroke="#6BA8DD" stroke-width="1.5" stroke-linecap="round"/><rect x="10" y="14" width="5" height="4" rx="1" fill="#00AEEF" opacity=".7"/><rect x="17" y="14" width="5" height="4" rx="1" fill="#00AEEF" opacity=".4"/><rect x="10" y="20" width="5" height="4" rx="1" fill="#00AEEF" opacity=".4"/><rect x="17" y="20" width="5" height="4" rx="1" fill="#6BA8DD" opacity=".8"/></svg>
+            </div>
+            <p>Simulador de custo técnico por rota — identificação do custo teórico para Ensacado e Granel, comparado com fretes atuais e fretes de mercado.</p>
+            <div class="meta-box">
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><rect width="18" height="18" rx="3" fill="#1D6F42"/><text x="9" y="13" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff">XLS</text></svg><span>Entrega em Excel</span></div>
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#8b94a3" stroke-width="1.2" fill="none"/><path d="M9 5v4l3 2" stroke="#8b94a3" stroke-width="1.2" stroke-linecap="round"/></svg><span>Frequência Mensal</span></div>
+            </div>
+        </div>
+
+        <div class="deliverable">
+            <h4>Informações Qualitativas</h4>
+            <div class="icon-circle">
+                <svg viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="16" rx="13" ry="8" stroke="#00AEEF" stroke-width="1.5" fill="none"/><circle cx="16" cy="16" r="4.5" fill="#00AEEF" opacity=".3"/><circle cx="16" cy="16" r="2.5" fill="#6BA8DD"/></svg>
+            </div>
+            <p>Painel qualitativo com cenário atual e tendências do mercado de cimento — fretes, modelos de contratação e comportamento de concorrentes por região.</p>
+            <div class="meta-box">
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="6" width="4" height="10" rx="1" fill="#E8A22B"/><rect x="7" y="9" width="4" height="7" rx="1" fill="#F2C811"/><rect x="12" y="3" width="4" height="13" rx="1" fill="#F5D657"/></svg><span>Entrega em Power BI</span></div>
+                <div class="meta-row"><svg class="meta-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#8b94a3" stroke-width="1.2" fill="none"/><path d="M9 5v4l3 2" stroke="#8b94a3" stroke-width="1.2" stroke-linecap="round"/></svg><span>Frequência Mensal</span></div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+</section>
+
+<!-- ══ 08 — PONTOS DE ATENÇÃO ══ -->
+<section id="atencao">
+    <span class="section-tag">08 — Pontos de Atenção</span>
+    <h2>Pontos de Atenção</h2>
+    <p class="atencao-intro">Outras informações importantes relativas à metodologia:</p>
+    <ul class="atencao-list">
+        <li>Por questões de <em>compliance</em>, os nomes dos embarcadores concorrentes não serão divulgados;</li>
+        <li>
+            O <em>benchmarking</em> de fretes será apresentado da seguinte forma:
+            <ul class="atencao-sublist">
+                <li>Por local de origem da carga e/ou por região;</li>
+                <li>Por tipo de veículo;</li>
+                <li>Por <em>range</em> / faixa de KM a ser informada pela CIMENTO NACIONAL;</li>
+                <li>Em R$/TKM (apresentaremos uma curva de fretes por origem / região).</li>
+            </ul>
+        </li>
+        <li>Algumas tarifas serão aproximadas às praticadas pelo mercado concorrente, principalmente aquelas onde não será possível a captura da informação real. Para estes casos, utilizaremos da métrica R$/TKM respeitando o perfil dos ativos e das regiões de onde se origina o transporte.</li>
+    </ul>
+    <div class="atencao-banner">
+        Temos o <strong>compromisso de manter vivas as nossas bases e fontes de informações</strong>. Para isso, adotamos sempre as melhores práticas para garantir maior capilaridade e quantidade de referências, as quais passam internamente por uma análise rigorosa de qualidade e comparabilidade das informações. Nossa metodologia prevê pesquisas em nível Nacional, nos atentando a todos os <em>players</em> que atuam neste mercado.
+    </div>
+</section>
+
+<!-- ══ 09 — PREMISSAS DO PLANO DE TRABALHO ══ -->
+<section id="premissas">
+    <span class="section-tag">09 — Premissas</span>
+    <h2>Premissas do Plano de Trabalho</h2>
+    <p class="subtitle">Condições operacionais que norteiam a execução do projeto, validadas em conjunto entre TMT e Cimento Nacional.</p>
+    <div class="premissas-grid">
+        <div class="premissa-item"><span class="premissa-num">1</span><p>Para a <strong>fotografia</strong>, consideramos o prazo de 30 dias após validação conjunta da base para entrega do projeto (Benchmarking, Qualitativo e Should Cost).</p></div>
+        <div class="premissa-item"><span class="premissa-num">2</span><p>Após a aprovação do projeto piloto (fotografia), iniciam-se as <strong>atualizações recorrentes</strong>, devendo a CIMENTO NACIONAL enviar mensalmente as bases atualizadas nos mesmos formatos validados no piloto.</p></div>
+        <div class="premissa-item"><span class="premissa-num">3</span><p>As datas de apresentação serão validadas previamente entre as partes, sendo o prazo de início dos trabalhos após a assinatura do contrato e envio e validação das bases.</p></div>
+        <div class="premissa-item"><span class="premissa-num">4</span><p>O formato de entrega (<strong>Excel e Power BI</strong>) seguirá o modelo atual adotado pela TMT, podendo haver ajustes para adequação às necessidades da CIMENTO NACIONAL.</p></div>
+        <div class="premissa-item"><span class="premissa-num">5</span><p>O escopo de trabalho considera as informações, regiões e periodicidade solicitadas pela CIMENTO NACIONAL, podendo ser revisto em caso de inclusão ou exclusão de rotas.</p></div>
+        <div class="premissa-item"><span class="premissa-num">6</span><p>As fontes de coleta (embarcador e/ou transportador) não serão divulgadas para garantia do <strong>compliance</strong>, sendo informados os referenciais de frete e informações mercadológicas de forma a preservar a integridade dessas fontes.</p></div>
+        <div class="premissa-item" style="grid-column:1 / -1;"><span class="premissa-num">7</span><p>Na falta da informação exata da rota solicitada, será utilizada a metodologia de <strong>extrapolação de dados</strong> considerando os fretes praticados nas mesmas mesorregiões de origem e destino (referencial R$/t/km).</p></div>
+    </div>
+</section>
+
+<!-- ══ 10 — COMERCIAL ══ -->
+<section id="comercial">
+    <span class="section-tag">10 — Proposta Comercial</span>
+    <h2>Precificação do Projeto — Completo</h2>
+    <p class="subtitle">Inteligência de Mercado Cimento Nacional — projeto piloto (fotografia) seguido de atualizações periódicas recorrentes, contemplando as operações de Ensacado e Granel.</p>
+    <div class="pricing-container">
+        <div class="pricing-card">
+            <div class="scenario">Etapa 1</div>
+            <h3>Projeto Piloto — Fotografia</h3>
+            <p class="desc">Fotografia pontual de 30 dias das rotas Ensacado e Granel (Benchmarking, Qualitativo e Should Cost).</p>
+            <div class="price-breakdown">
+                <div class="price-total"><span class="pt-label">Valor Único</span><span class="pt-val">R$ 34.132,00</span></div>
+            </div>
+            <div class="price-unit">parcela única · fotografia de 30 dias</div>
+            <ul class="checklist">
+                <li>Benchmarking de fretes Ensacado e Granel</li>
+                <li>Análise qualitativa do mercado de cimento</li>
+                <li>Should Cost com calculadora TMT para BIDs</li>
+                <li>Entrega total em 30 dias após validação da base</li>
+            </ul>
+            <button class="accept-btn" data-plano="Projeto Piloto — Fotografia" data-valor="R$ 34.132,00 (parcela única — fotografia de 30 dias)">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Aceitar este plano
+            </button>
+            <p class="accept-note">Ao clicar, abre um e-mail para a equipe TMT confirmando o plano escolhido.</p>
+        </div>
+        <div class="pricing-card featured">
+            <div class="scenario">Etapa 2</div>
+            <h3>Atualização Periódica — Recorrente Mensal</h3>
+            <p class="desc">Gestão contínua mensal por 12 meses após a aprovação do projeto piloto.</p>
+            <div class="price-breakdown">
+                <div class="price-total"><span class="pt-label">Valor Fixo Mensal</span><span class="pt-val">R$ 22.185,00<span style="font-size:.8rem;font-weight:400;color:var(--text-muted);"> / mês</span></span></div>
+            </div>
+            <div class="price-unit">por mês durante 12 meses</div>
+            <ul class="checklist">
+                <li>Benchmarking mensal Ensacado e Granel</li>
+                <li>Análise qualitativa atualizada mensalmente</li>
+                <li>Should Cost mensal — calculadora TMT para BIDs</li>
+                <li>Dashboards em Power BI e Excel atualizados</li>
+                <li>Suporte estratégico contínuo da equipe TMT</li>
+            </ul>
+            <button class="accept-btn" data-plano="Atualização Periódica — Recorrente Mensal" data-valor="R$ 22.185,00 / mês (recorrente, 12 meses)">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Aceitar este plano
+            </button>
+            <p class="accept-note">Ao clicar, abre um e-mail para a equipe TMT confirmando o plano escolhido.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══ 11 — CONDIÇÕES ══ -->
+<section id="condicoes">
+    <span class="section-tag">11 — Condições</span>
+    <h2>Condições Comerciais</h2>
+    <div class="conditions-grid">
+        <div class="condition"><div class="ico">₪</div><h4>Impostos</h4><p>Todos os impostos inclusos nos valores apresentados.</p></div>
+        <div class="condition"><div class="ico">⎔</div><h4>Modelo de Contratação</h4><p>30 dias para o projeto piloto + 12 meses de atualizações periódicas — totalizando 13 meses de contrato.</p></div>
+        <div class="condition"><div class="ico">↻</div><h4>Reajuste</h4><p>Após 12 meses: 50% base IPCA + 50% dissídio coletivo TMT.</p></div>
+        <div class="condition"><div class="ico">⏱</div><h4>Pagamento</h4><p>15 dias após a entrega das Notas Fiscais correspondentes.</p></div>
+        <div class="condition"><div class="ico">✈</div><h4>Viagens e Estadias</h4><p>Custos aprovados pela Cimento Nacional são de sua responsabilidade.</p></div>
+        <div class="condition"><div class="ico">⌛</div><h4>Validade da Proposta</h4><p>30 dias a partir desta data.</p></div>
+    </div>
+</section>
+
+<footer>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <img src="logo_tmt.png" alt="TMT LOG" style="height:34px;" onerror="this.style.display='none'">
+            <p style="color:var(--text-muted);font-size:.85rem;margin-top:.6rem;max-width:400px;">Inteligência de Mercado aplicada à logística rodoviária — benchmarking real, análise técnica e modelagem preditiva.</p>
+        </div>
+        <div style="text-align:right;">
+            <p style="color:var(--text-muted);font-size:.82rem;">Cliente: Cimento Nacional &nbsp;•&nbsp; 05/2026</p>
+            <p style="color:var(--text-muted);font-size:.82rem;margin-top:.3rem;">www.tmtlog.com</p>
+        </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 TMT LOG — Inteligência em Logística. Todos os direitos reservados.</div>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const ensacado = [
+  {ord:1,  mun:"Guarulhos",             uf:"SP", exped:"Sete Lagoas (CNC)", lat:-23.46, lng:-46.53, vol:162112, vei:"BITRUCK"},
+  {ord:2,  mun:"Campinas",              uf:"SP", exped:"Sete Lagoas (CNC)", lat:-22.90, lng:-47.06, vol:79683,  vei:"7 EIXOS"},
+  {ord:3,  mun:"Cuiabá",                uf:"MT", exped:"Sete Lagoas (CNC)", lat:-15.60, lng:-56.10, vol:66245,  vei:"7 EIXOS"},
+  {ord:4,  mun:"Rio de Janeiro",        uf:"RJ", exped:"Cantagalo",         lat:-22.91, lng:-43.17, vol:37591,  vei:"7 EIXOS"},
+  {ord:5,  mun:"Juazeiro",              uf:"BA", exped:"Pitimbu (CCP)",     lat:-9.42,  lng:-40.50, vol:32145,  vei:"CARRETA LS"},
+  {ord:6,  mun:"Petrolina",             uf:"PE", exped:"Pitimbu (CCP)",     lat:-9.39,  lng:-40.51, vol:26827,  vei:"TRUCK"},
+  {ord:7,  mun:"Águas Lindas de Goiás", uf:"GO", exped:"Sete Lagoas (CNC)", lat:-15.75, lng:-48.28, vol:19272,  vei:"TRUCK"},
+  {ord:8,  mun:"Uberlândia",            uf:"MG", exped:"Arcos (Jazida)",    lat:-18.92, lng:-48.28, vol:15245,  vei:"7 EIXOS"},
+  {ord:9,  mun:"João Pessoa",           uf:"PB", exped:"Pitimbu (CCP)",     lat:-7.12,  lng:-34.86, vol:14287,  vei:"7 EIXOS"},
+  {ord:10, mun:"Serra Talhada",         uf:"PE", exped:"Pitimbu (CCP)",     lat:-7.99,  lng:-38.30, vol:10534,  vei:"TRUCK"},
+  {ord:11, mun:"São Luís",              uf:"MA", exped:"Pitimbu (CCP)",     lat:-2.54,  lng:-44.28, vol:10490,  vei:"CARRETA LS"},
+  {ord:12, mun:"Aparecida de Goiânia",  uf:"GO", exped:"Sete Lagoas (CNC)", lat:-16.82, lng:-49.24, vol:9544,   vei:"CARRETA LS"},
+  {ord:13, mun:"Maceió",                uf:"AL", exped:"Pitimbu (CCP)",     lat:-9.67,  lng:-35.74, vol:9451,   vei:"CARRETA LS"},
+  {ord:14, mun:"Vitória da Conquista",  uf:"BA", exped:"Sete Lagoas (CNC)", lat:-14.87, lng:-40.84, vol:9234,   vei:"CARRETA LS"},
+  {ord:15, mun:"Duque de Caxias",       uf:"RJ", exped:"Cantagalo",         lat:-22.79, lng:-43.31, vol:8961,   vei:"TRUCK"},
+  {ord:16, mun:"Praia Grande",          uf:"SP", exped:"Sete Lagoas (CNC)", lat:-24.01, lng:-46.41, vol:8783,   vei:"BITRUCK"},
+  {ord:17, mun:"Uberlândia (2)",        uf:"MG", exped:"Sete Lagoas (CNC)", lat:-18.94, lng:-48.25, vol:7884,   vei:"7 EIXOS"},
+  {ord:18, mun:"Natal",                 uf:"RN", exped:"Pitimbu (CCP)",     lat:-5.79,  lng:-35.21, vol:7324,   vei:"BITRUCK"},
+  {ord:19, mun:"Niterói",               uf:"RJ", exped:"Cantagalo",         lat:-22.88, lng:-43.10, vol:6712,   vei:"BITRUCK"},
+  {ord:20, mun:"Feira de Santana",      uf:"BA", exped:"Pitimbu (CCP)",     lat:-12.27, lng:-38.97, vol:6609,   vei:"CARRETA LS"},
+  {ord:21, mun:"Campos dos Goytacazes", uf:"RJ", exped:"Cantagalo",         lat:-21.76, lng:-41.33, vol:6218,   vei:"CARRETA LS"},
+  {ord:22, mun:"Petrópolis",            uf:"RJ", exped:"Cantagalo",         lat:-22.51, lng:-43.18, vol:6011,   vei:"7 EIXOS"},
+  {ord:23, mun:"Montes Claros",         uf:"MG", exped:"Sete Lagoas (CNC)", lat:-16.73, lng:-43.86, vol:5774,   vei:"TRUCK"},
+  {ord:24, mun:"Porto Seguro",          uf:"BA", exped:"Sete Lagoas (CNC)", lat:-16.45, lng:-39.07, vol:5668,   vei:"7 EIXOS"},
+  {ord:25, mun:"Teresina",              uf:"PI", exped:"Pitimbu (CCP)",     lat:-5.09,  lng:-42.80, vol:5641,   vei:"7 EIXOS"},
+  {ord:26, mun:"Patos",                 uf:"PB", exped:"Pitimbu (CCP)",     lat:-7.02,  lng:-37.28, vol:5223,   vei:"TRUCK"},
+  {ord:27, mun:"Juína",                 uf:"MT", exped:"Sete Lagoas (CNC)", lat:-11.37, lng:-58.74, vol:4828,   vei:"CARRETA LS"},
+  {ord:28, mun:"Caucaia",               uf:"CE", exped:"Pitimbu (CCP)",     lat:-3.74,  lng:-38.65, vol:4590,   vei:"CARRETA LS"},
+  {ord:29, mun:"Nssa Sra. do Socorro",  uf:"SE", exped:"Pitimbu (CCP)",     lat:-10.86, lng:-37.12, vol:4311,   vei:"CARRETA LS"},
+  {ord:30, mun:"João Pinheiro",         uf:"MG", exped:"Sete Lagoas (CNC)", lat:-17.74, lng:-46.18, vol:4284,   vei:"CARRETA LS"},
+  {ord:31, mun:"Cosmorama",             uf:"SP", exped:"Arcos (Jazida)",    lat:-20.47, lng:-49.79, vol:4059,   vei:"7 EIXOS"},
+  {ord:32, mun:"Cariacica",             uf:"ES", exped:"Cantagalo",         lat:-20.26, lng:-40.42, vol:4030,   vei:"6/7 EIXOS"},
+  {ord:33, mun:"Cosmorama (2)",         uf:"SP", exped:"Sete Lagoas (CNC)", lat:-20.50, lng:-49.82, vol:4015,   vei:"6/7 EIXOS"},
+  {ord:34, mun:"Araçuaí",               uf:"MG", exped:"Sete Lagoas (CNC)", lat:-16.86, lng:-42.07, vol:3812,   vei:"6/7 EIXOS"},
+];
+
+const granel = [
+  {ord:1,  mun:"João Pessoa",             uf:"PB", exped:"Pitimbu (CCP)",     lat:-7.12,  lng:-34.86, vol:69762, vei:"CARRETA LS"},
+  {ord:2,  mun:"São Paulo",               uf:"SP", exped:"Sete Lagoas (CNC)", lat:-23.55, lng:-46.64, vol:67969, vei:"7 EIXOS / CARRETA LS"},
+  {ord:3,  mun:"Rio de Janeiro",          uf:"RJ", exped:"Cantagalo",         lat:-22.93, lng:-43.20, vol:36993, vei:"7 EIXOS"},
+  {ord:4,  mun:"Monte Mor",               uf:"SP", exped:"Sete Lagoas (CNC)", lat:-22.94, lng:-47.31, vol:22893, vei:"7 EIXOS / CARRETA LS"},
+  {ord:5,  mun:"Jaboatão dos Guararapes", uf:"PE", exped:"Pitimbu (CCP)",     lat:-8.12,  lng:-35.00, vol:11861, vei:"CARRETA LS"},
+  {ord:6,  mun:"Campos dos Goytacazes",   uf:"RJ", exped:"Cantagalo",         lat:-21.78, lng:-41.35, vol:10913, vei:"CARRETA LS"},
+  {ord:7,  mun:"Serra",                   uf:"ES", exped:"Cantagalo",         lat:-20.13, lng:-40.31, vol:9827,  vei:"CARRETA LS"},
+  {ord:8,  mun:"Santa Luzia",             uf:"MG", exped:"Sete Lagoas (CNC)", lat:-19.77, lng:-43.85, vol:8014,  vei:"7 EIXOS / CARRETA LS"},
+  {ord:9,  mun:"Campina Grande",          uf:"PB", exped:"Pitimbu (CCP)",     lat:-7.22,  lng:-35.88, vol:5361,  vei:"7 EIXOS / CARRETA LS"},
+  {ord:10, mun:"Olinda",                  uf:"PE", exped:"Pitimbu (CCP)",     lat:-8.02,  lng:-34.85, vol:4769,  vei:"7 EIXOS / CARRETA LS"},
+  {ord:11, mun:"Niterói",                 uf:"RJ", exped:"Cantagalo",         lat:-22.90, lng:-43.08, vol:4622,  vei:"CARRETA LS"},
+  {ord:12, mun:"São José do Rio Preto",   uf:"SP", exped:"Sete Lagoas (CNC)", lat:-20.81, lng:-49.38, vol:4545,  vei:"7 EIXOS"},
+];
+
+// ── MAPA DE COLUNAS 3D (ECharts GL · geo3D do Brasil) ─────────────────────
+const fmt = v => v.toLocaleString('pt-BR') + ' ton';
+const maxVol3D = Math.max(...[...ensacado, ...granel].map(d => d.vol));
+const HSCALE = 18; // altura máxima das colunas (unidades do mapa)
+
+function toBars(arr, op, color){
+  return arr.map(d => ({
+    value: [d.lng, d.lat, Math.sqrt(d.vol / maxVol3D) * HSCALE],
+    name: d.mun, uf: d.uf, op, vei: d.vei, realVol: d.vol,
+    itemStyle: { color }
+  }));
+}
+const barsEns = toBars(ensacado, 'Ensacado', '#FDB913');
+const barsGra = toBars(granel,   'Granel',   '#2E6CB0');
+
+const tooltip3D = {
+  backgroundColor: '#11161e', borderColor: 'rgba(255,255,255,.12)',
+  textStyle: { color: '#e8ecf1', fontFamily: 'Outfit' },
+  formatter: p => {
+    const d = p.data;
+    if (!d || d.realVol == null) return '';
+    return `<b style="color:${d.op==='Ensacado'?'#FDB913':'#5b9bd5'}">${d.name} · ${d.uf}</b><br>${d.op} · ${fmt(d.realVol)}<br><span style="color:#8b94a3">Veículo: ${d.vei}</span>`;
+  }
+};
+const barCommon = {
+  type: 'bar3D', coordinateSystem: 'geo3D',
+  barSize: 0.7, shading: 'lambert', bevelSize: 0.25, bevelSmoothness: 2,
+  label: { show: true, formatter: p => p.data.name, distance: 0,
+           textStyle: { color: '#d4dbe4', fontSize: 8, backgroundColor: 'transparent', borderWidth: 0 } },
+  emphasis: { itemStyle: { color: '#aee3ff' },
+              label: { show: true, textStyle: { color: '#fff', fontSize: 11, backgroundColor: 'rgba(0,0,0,.55)', padding: [3,5], borderRadius: 4 } } }
+};
+
+const chart3D = echarts.init(document.getElementById('chart3D'), null, { renderer: 'canvas' });
+chart3D.showLoading({ text: 'Carregando mapa…', color: '#00AEEF', textColor: '#8b94a3', maskColor: 'rgba(10,14,20,.3)' });
+
+fetch('https://cdn.jsdelivr.net/gh/codeforgermany/click_that_hood/public/data/brazil-states.geojson')
+  .then(r => r.json())
+  .then(geo => {
+    echarts.registerMap('brazil', geo);
+    chart3D.hideLoading();
+    chart3D.setOption({
+      backgroundColor: 'transparent',
+      tooltip: tooltip3D,
+      geo3D: {
+        map: 'brazil', roam: true, regionHeight: 1.2, boxWidth: 100,
+        itemStyle: { color: '#141b26', borderWidth: 1, borderColor: 'rgba(0,174,239,.22)' },
+        label: { show: false },
+        emphasis: { itemStyle: { color: '#1b2533' }, label: { show: false } },
+        viewControl: { distance: 130, alpha: 42, beta: 0, autoRotate: false, minDistance: 60, maxDistance: 240 },
+        light: { main: { intensity: 1.3, alpha: 45, beta: 30, shadow: true, shadowQuality: 'high' }, ambient: { intensity: 0.4 } },
+        environment: '#0a0e14'
+      },
+      series: [
+        Object.assign({ data: barsEns }, barCommon),
+        Object.assign({ data: barsGra }, barCommon)
+      ]
+    });
+  })
+  .catch(() => {
+    chart3D.hideLoading();
+    document.getElementById('chart3D').innerHTML =
+      '<p style="color:#8b94a3;text-align:center;padding:3rem 1rem">Não foi possível carregar o mapa 3D (sem conexão com a internet no momento). Tente recarregar a página.</p>';
+  });
+
+window.addEventListener('resize', () => chart3D.resize());
+
+// ── VEHICLE BAR CHARTS ────────────────────────────────────────────────────
+function countVeh(arr) {
+  const m = {};
+  arr.forEach(r => { m[r.vei] = (m[r.vei]||0)+1; });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+// quebra rótulos longos em ~2 linhas (ex.: "7 EIXOS / CARRETA LS")
+function wrapLabel(label) {
+  if (label.length <= 10) return label;
+  const words = label.split(' ');
+  const lines = []; let cur = '';
+  words.forEach(w => {
+    if ((cur + ' ' + w).trim().length > 11) { if (cur) lines.push(cur.trim()); cur = w; }
+    else { cur = (cur + ' ' + w).trim(); }
+  });
+  if (cur) lines.push(cur.trim());
+  return lines;
+}
+
+// rótulo de valor no topo de cada barra
+const valueLabelPlugin = {
+  id:'valueLabels',
+  afterDatasetsDraw(chart){
+    const {ctx} = chart;
+    const meta = chart.getDatasetMeta(0);
+    chart.data.datasets[0].data.forEach((val,i)=>{
+      const bar = meta.data[i];
+      ctx.save();
+      ctx.fillStyle = '#fff';
+      ctx.font = '600 12px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(val, bar.x, bar.y - 7);
+      ctx.restore();
+    });
+  }
+};
+
+function makeBar(canvasId, data, from, to) {
+  new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels:data.map(d=>d[0]), datasets:[{
+      data:data.map(d=>d[1]),
+      backgroundColor(context){
+        const {chart} = context;
+        const {ctx, chartArea} = chart;
+        if(!chartArea) return from;
+        const g = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+        g.addColorStop(0, from);
+        g.addColorStop(1, to);
+        return g;
+      },
+      borderRadius:6, maxBarThickness:50
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:18 } },
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.y} rotas` } } },
+      scales:{
+        x:{ grid:{display:false}, border:{display:false},
+            ticks:{ color:'#8b94a3', font:{size:9.5}, maxRotation:0, autoSkip:false,
+              callback:function(v){ return wrapLabel(this.getLabelForValue(v)); } } },
+        y:{ beginAtZero:true, grid:{ color:'rgba(255,255,255,.05)' }, border:{display:false},
+            ticks:{ color:'#8b94a3', font:{size:10}, precision:0, stepSize:2 } }
+      }
+    },
+    plugins:[valueLabelPlugin]
+  });
+}
+makeBar('chartVeicEns',  countVeh(ensacado), '#005f8f', '#3fc8ff');
+makeBar('chartVeicGran', countVeh(granel),   '#1b3f66', '#5b9bd5');
+
+// ── ROUTE TABLES ──────────────────────────────────────────────────────────
+function fillTable(tbId, data, colorClass) {
+  const maxV = Math.max(...data.map(d=>d.vol));
+  const tb = document.getElementById(tbId);
+  data.forEach(r => {
+    const barW = Math.max(4, Math.round((r.vol/maxV)*70));
+    const row  = document.createElement('tr');
+    row.innerHTML = `
+      <td style="color:var(--text-muted)">${r.ord}</td>
+      <td style="color:var(--text-muted);font-size:.72rem;white-space:nowrap;">${r.exped}</td>
+      <td style="font-weight:500">${r.mun}</td>
+      <td><span class="veh-tag">${r.uf}</span></td>
+      <td><div class="vol-bar-wrap"><div class="vol-bar ${colorClass}" style="width:${barW}px"></div><span class="vol-num">${r.vol.toLocaleString('pt-BR')}</span></div></td>
+      <td><span class="veh-tag">${r.vei}</span></td>`;
+    tb.appendChild(row);
+  });
+}
+fillTable('tbEns',  ensacado, 'ens-bar');
+fillTable('tbGran', granel,   'gran-bar');
+
+// ── IMAGEM DO TOPO: cobre do Hero até o "Volume de Rotas Mapeadas" ─────────
+function sizeHeroImg(){
+  const h2    = document.querySelector('#escopo h2');
+  const layer = document.querySelector('.hero-img-layer');
+  if(!h2 || !layer) return;
+  const EXTRA = 130; // estende um pouco abaixo do título p/ mostrar o caminhão inteiro
+  const top = h2.getBoundingClientRect().top + window.pageYOffset;
+  layer.style.height = Math.round(top + EXTRA) + 'px';
+}
+window.addEventListener('load',   sizeHeroImg);
+window.addEventListener('resize', sizeHeroImg);
+sizeHeroImg();
+
+// ── ACEITE DA PROPOSTA (mailto) ───────────────────────────────────────────
+document.querySelectorAll('.accept-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const plano = btn.dataset.plano;
+    const valor = btn.dataset.valor;
+    const to = 'otavio@tmtlog.com,mayza.campolina@tmtlog.com,gabriel.silva@tmtlog.com';
+    const subject = `Aceite de Proposta — Cimento Nacional — ${plano}`;
+    const body =
+      `Olá, equipe TMT.\n\n` +
+      `Após análise da proposta de Inteligência de Mercado, a Cimento Nacional deseja ACEITAR o seguinte plano:\n\n` +
+      `• Plano: ${plano}\n` +
+      `• Valor: ${valor}\n\n` +
+      `Por favor, entrem em contato para darmos sequência à contratação.\n\n` +
+      `Atenciosamente,\n`;
+    window.location.href =
+      `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+});
+</script>
+
+</body>
+</html>
